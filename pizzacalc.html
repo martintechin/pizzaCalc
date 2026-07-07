@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#c8380f" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23c8380f'/%3E%3Cpath d='M256 448 L112 148 A176 176 0 0 1 400 148 Z' fill='%23f5c356'/%3E%3Cpath d='M112 148 A176 176 0 0 1 400 148 L382 186 A150 150 0 0 0 130 186 Z' fill='%23a4491f'/%3E%3Ccircle cx='256' cy='240' r='34' fill='%23d23b24'/%3E%3Ccircle cx='192' cy='308' r='26' fill='%23d23b24'/%3E%3Ccircle cx='310' cy='316' r='24' fill='%23d23b24'/%3E%3Ccircle cx='248' cy='374' r='18' fill='%23d23b24'/%3E%3C/svg%3E" />
+<title>Pizza Dough Calculator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { color-scheme: light; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #fff8f0; color: #33261f; -webkit-font-smoothing: antialiased;
+  }
+  input, button { font: inherit; color: inherit; }
+  .app { max-width: 480px; margin: 0 auto; padding: 20px 16px calc(40px + env(safe-area-inset-bottom)); }
+  .app-header { text-align: center; margin-bottom: 20px; }
+  .app-header h1 { font-size: 1.5rem; color: #c8380f; }
+  .tagline { margin-top: 4px; font-size: 0.875rem; color: #8a6f60; }
+  .form-card, .card {
+    background: #fff; border: 1px solid #f0ddcc; border-radius: 12px;
+    padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(51,38,31,0.06);
+  }
+  .card h2 { font-size: 1.05rem; color: #c8380f; }
+  .card-subtitle { font-size: 0.8rem; color: #8a6f60; margin: 2px 0 12px; }
+  .field { display: block; margin-bottom: 12px; flex: 1; }
+  .field:last-child { margin-bottom: 0; }
+  .field-row { display: flex; gap: 12px; }
+  .field-label {
+    display: flex; align-items: baseline; justify-content: space-between;
+    font-size: 0.8rem; font-weight: 600; color: #8a6f60; margin-bottom: 4px;
+  }
+  .field input {
+    width: 100%; padding: 10px 12px; border: 1px solid #e2c9b0;
+    border-radius: 8px; background: #fffdfa; font-size: 1rem;
+  }
+  .field input:focus { outline: 2px solid #c8380f; outline-offset: -1px; border-color: transparent; }
+  .datetime-input { font-variant-numeric: tabular-nums; }
+  .link-button {
+    background: none; border: none; color: #c8380f; font-size: 0.75rem;
+    font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0;
+  }
+  .advanced { margin-bottom: 16px; }
+  .advanced summary {
+    cursor: pointer; font-size: 0.875rem; font-weight: 600;
+    color: #8a6f60; padding: 8px 4px; user-select: none;
+  }
+  .advanced-body { background: #fff; border: 1px solid #f0ddcc; border-radius: 12px; padding: 16px; margin-top: 8px; }
+  .segmented { display: flex; border: 1px solid #e2c9b0; border-radius: 8px; overflow: hidden; }
+  .segment {
+    flex: 1; padding: 9px 4px; border: none; background: #fffdfa;
+    font-size: 0.8rem; cursor: pointer; border-right: 1px solid #e2c9b0;
+  }
+  .segment:last-child { border-right: none; }
+  .segment.active { background: #c8380f; color: #fff; font-weight: 600; }
+  .messages { margin-bottom: 16px; }
+  .message { padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 8px; }
+  .message.error { background: #fdeaea; border: 1px solid #f0b8b8; color: #9d1f1f; }
+  .message.warning { background: #fdf6e3; border: 1px solid #ecd9a0; color: #7a5c10; }
+  .recipe-table { width: 100%; border-collapse: collapse; }
+  .recipe-table td { padding: 9px 0; border-bottom: 1px solid #f5e8da; font-size: 0.95rem; }
+  .recipe-table tr:last-child td { border-bottom: none; }
+  .recipe-table .amount { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .yeast-pct { font-size: 0.75rem; color: #8a6f60; font-weight: 400; }
+  .timeline { list-style: none; }
+  .timeline-step { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f5e8da; }
+  .timeline-step:last-child { border-bottom: none; }
+  .step-time {
+    flex: 0 0 84px; font-weight: 700; font-variant-numeric: tabular-nums;
+    color: #c8380f; font-size: 0.9rem; padding-top: 1px;
+  }
+  .step-body { display: flex; flex-direction: column; gap: 2px; }
+  .step-label { font-weight: 600; font-size: 0.95rem; }
+  .step-detail { font-size: 0.8rem; color: #8a6f60; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>🍕 Pizza Dough Calculator</h1>
+    <p class="tagline">Tell it when you want to cook — it plans the dough backwards.</p>
+  </header>
+
+  <section class="form-card">
+    <div class="field-row">
+      <label class="field">
+        <span class="field-label">Pizzas</span>
+        <input id="pizzas" type="number" min="1" max="99" />
+      </label>
+      <label class="field">
+        <span class="field-label">Ball weight (g)</span>
+        <input id="ballWeightG" type="number" min="100" max="500" step="5" />
+      </label>
+    </div>
+    <label class="field">
+      <span class="field-label">I want to cook at</span>
+      <input id="cookTime" type="datetime-local" class="datetime-input" />
+    </label>
+    <label class="field">
+      <span class="field-label">Starting (mixing) at
+        <button type="button" id="resetStart" class="link-button" hidden>reset to now</button>
+      </span>
+      <input id="startTime" type="datetime-local" class="datetime-input" />
+    </label>
+  </section>
+
+  <details class="advanced">
+    <summary>Advanced settings</summary>
+    <div class="advanced-body">
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">Hydration (%)</span>
+          <input id="hydrationPct" type="number" min="50" max="90" step="0.5" />
+        </label>
+        <label class="field">
+          <span class="field-label">Salt (%)</span>
+          <input id="saltPct" type="number" min="0" max="5" step="0.1" />
+        </label>
+      </div>
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">Room temp (°C)</span>
+          <input id="roomTempC" type="number" min="10" max="35" />
+        </label>
+        <label class="field">
+          <span class="field-label">Fridge temp (°C)</span>
+          <input id="fridgeTempC" type="number" min="1" max="10" />
+        </label>
+      </div>
+      <div class="field">
+        <span class="field-label">Yeast</span>
+        <div class="segmented" id="yeastType" role="group" aria-label="Yeast type">
+          <button type="button" class="segment" data-value="fresh">Fresh</button>
+          <button type="button" class="segment" data-value="activeDry">Active dry</button>
+          <button type="button" class="segment" data-value="instant">Instant dry</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="field-label">Proofing</span>
+        <div class="segmented" id="proofingMode" role="group" aria-label="Proofing mode">
+          <button type="button" class="segment" data-value="auto">Automatic</button>
+          <button type="button" class="segment" data-value="roomOnly">Room temp only</button>
+          <button type="button" class="segment" data-value="coldProof">Cold proof</button>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="messages" id="messages"></div>
+  <div id="results"></div>
+</div>
+
+<script>
+"use strict";
+
+// ---------- Constants (keep in sync with src/config.ts) ----------
+
+const LANG = "sv-SE";
+const MS_PER_HOUR = 3600000;
+
+const DEFAULTS = {
+  pizzas: 4, ballWeightG: 265, hydrationPct: 62, saltPct: 2.8,
+  yeastType: "fresh", roomTempC: 21, fridgeTempC: 4, proofingMode: "auto",
+};
+
+const MODEL = {
+  REFERENCE_TEMP_C: 21, TEMP_DOUBLING_C: 7, YEAST_CONSTANT_K: 1.8,
+  MIN_IDY_PCT: 0.01, MAX_IDY_PCT: 1.33,
+  YEAST_FACTOR: { fresh: 3, activeDry: 1.25, instant: 1 },
+};
+
+const SCHEDULE = {
+  COLD_PROOF_THRESHOLD_HOURS: 12, COLD_BULK_HOURS: 2, COLD_FINAL_PROOF_HOURS: 3,
+  ROOM_BALL_BEFORE_COOK_HOURS: 2, MIN_SENSIBLE_HOURS: 4, MAX_SENSIBLE_HOURS: 120,
+};
+
+const WASTE_FACTOR = 1.02;
+
+const YEAST_NAMES = { fresh: "Fresh yeast", activeDry: "Active dry yeast", instant: "Instant dry yeast" };
+
+// ---------- Fermentation model ----------
+
+function tempRate(tempC) {
+  return 2 ** ((tempC - MODEL.REFERENCE_TEMP_C) / MODEL.TEMP_DOUBLING_C);
+}
+
+function effectiveHours(segments) {
+  return segments.reduce((sum, seg) => sum + tempRate(seg.tempC) * seg.hours, 0);
+}
+
+function solveIdyPct(segments) {
+  const hours = effectiveHours(segments);
+  if (hours <= 0) return { idyPct: MODEL.MAX_IDY_PCT, clamped: true };
+  const raw = MODEL.YEAST_CONSTANT_K / hours;
+  const idyPct = Math.min(MODEL.MAX_IDY_PCT, Math.max(MODEL.MIN_IDY_PCT, raw));
+  return { idyPct, clamped: idyPct !== raw };
+}
+
+// ---------- Schedule planner ----------
+
+function addHours(date, hours) {
+  return new Date(date.getTime() + hours * MS_PER_HOUR);
+}
+
+const MIX_DETAIL = "Dissolve yeast in the water, add flour, then salt. Knead until smooth.";
+
+function buildRoomOnly(p, totalHours) {
+  const ballHours = Math.max(totalHours - SCHEDULE.ROOM_BALL_BEFORE_COOK_HOURS, totalHours / 2);
+  return {
+    mode: "roomOnly", totalHours,
+    segments: [{ hours: totalHours, tempC: p.roomTempC }],
+    steps: [
+      { label: "Mix the dough", detail: MIX_DETAIL, time: p.startTime },
+      { label: "Bulk proof", detail: `Cover and leave at room temperature (${p.roomTempC}°C).`, time: p.startTime },
+      { label: "Ball the dough", detail: "Divide into balls and proof covered until cooking.", time: addHours(p.startTime, ballHours) },
+      { label: "Fire it up", detail: "Stretch, top and bake.", time: p.cookTime },
+    ],
+  };
+}
+
+function buildColdProof(p, totalHours) {
+  const coldHours = totalHours - SCHEDULE.COLD_BULK_HOURS - SCHEDULE.COLD_FINAL_PROOF_HOURS;
+  return {
+    mode: "coldProof", totalHours,
+    segments: [
+      { hours: SCHEDULE.COLD_BULK_HOURS, tempC: p.roomTempC },
+      { hours: coldHours, tempC: p.fridgeTempC },
+      { hours: SCHEDULE.COLD_FINAL_PROOF_HOURS, tempC: p.roomTempC },
+    ],
+    steps: [
+      { label: "Mix the dough", detail: MIX_DETAIL, time: p.startTime },
+      { label: "Bulk proof", detail: `Cover and leave at room temperature (${p.roomTempC}°C).`, time: p.startTime },
+      { label: "Ball & into the fridge", detail: `Divide into balls, cover, and refrigerate (${p.fridgeTempC}°C).`, time: addHours(p.startTime, SCHEDULE.COLD_BULK_HOURS) },
+      { label: "Out of the fridge", detail: "Let the balls come back to room temperature, covered.", time: addHours(p.cookTime, -SCHEDULE.COLD_FINAL_PROOF_HOURS) },
+      { label: "Fire it up", detail: "Stretch, top and bake.", time: p.cookTime },
+    ],
+  };
+}
+
+function planSchedule(p) {
+  const totalHours = (p.cookTime.getTime() - p.startTime.getTime()) / MS_PER_HOUR;
+  const minColdTotal = SCHEDULE.COLD_BULK_HOURS + SCHEDULE.COLD_FINAL_PROOF_HOURS + 1;
+  const wantCold = p.proofingMode === "coldProof" ||
+    (p.proofingMode === "auto" && totalHours > SCHEDULE.COLD_PROOF_THRESHOLD_HOURS);
+  if (wantCold && totalHours < minColdTotal) {
+    return { schedule: buildRoomOnly(p, totalHours), coldFallback: true };
+  }
+  return {
+    schedule: wantCold ? buildColdProof(p, totalHours) : buildRoomOnly(p, totalHours),
+    coldFallback: false,
+  };
+}
+
+// ---------- Recipe ----------
+
+function roundTo(value, step) {
+  return Math.round(value / step) * step;
+}
+
+function buildRecipe(p) {
+  const totalDoughG = p.pizzas * p.ballWeightG * WASTE_FACTOR;
+  const h = p.hydrationPct / 100, s = p.saltPct / 100, y = p.yeastPct / 100;
+  const flourG = totalDoughG / (1 + h + s + y);
+  return {
+    flourG: roundTo(flourG, 1), waterG: roundTo(flourG * h, 1),
+    saltG: roundTo(flourG * s, 0.1), yeastG: roundTo(flourG * y, 0.01),
+    yeastType: p.yeastType, yeastPct: p.yeastPct, totalDoughG: roundTo(totalDoughG, 1),
+  };
+}
+
+// ---------- Orchestration ----------
+
+function calculate(inputs, now) {
+  const errors = [], warnings = [];
+  if (inputs.cookTime.getTime() <= now.getTime())
+    errors.push("The cook time is in the past — pick a future time.");
+  if (inputs.cookTime.getTime() <= inputs.startTime.getTime())
+    errors.push("The cook time must be after the start time.");
+  if (inputs.pizzas < 1) errors.push("You need at least one pizza.");
+  if (errors.length) return { recipe: null, schedule: null, errors, warnings };
+
+  const { schedule, coldFallback } = planSchedule(inputs);
+  if (coldFallback)
+    warnings.push("Not enough time for a cold proof — planned a room-temperature schedule instead.");
+  if (schedule.totalHours < SCHEDULE.MIN_SENSIBLE_HOURS)
+    warnings.push("Less than 4 hours until cooking — the dough may be underproofed. Consider cooking later.");
+  if (schedule.totalHours > SCHEDULE.MAX_SENSIBLE_HOURS)
+    warnings.push("More than 5 days until cooking — very long fermentations are hard to predict.");
+
+  const { idyPct, clamped } = solveIdyPct(schedule.segments);
+  if (clamped)
+    warnings.push("The yeast amount hit its practical limit for this timeline — the proof may be off. Adjust your cook time if you can.");
+
+  const recipe = buildRecipe({
+    pizzas: inputs.pizzas, ballWeightG: inputs.ballWeightG,
+    hydrationPct: inputs.hydrationPct, saltPct: inputs.saltPct,
+    yeastPct: idyPct * MODEL.YEAST_FACTOR[inputs.yeastType], yeastType: inputs.yeastType,
+  });
+  return { recipe, schedule, errors, warnings };
+}
+
+// ---------- Formatting ----------
+
+function formatStepTime(date, reference) {
+  const time = date.toLocaleTimeString(LANG, { hour: "2-digit", minute: "2-digit", hour12: false });
+  if (date.toDateString() === reference.toDateString()) return time;
+  if (Math.abs(date.getTime() - reference.getTime()) < 6 * 86400000) {
+    return `${date.toLocaleDateString(LANG, { weekday: "short" })} ${time}`;
+  }
+  return `${date.toLocaleDateString(LANG, { day: "numeric", month: "short" })} ${time}`;
+}
+
+function formatHoursLabel(hours) {
+  return `${(Math.round(hours * 2) / 2).toLocaleString(LANG)} h`;
+}
+
+function formatGrams(grams) {
+  const decimals = grams < 1 ? 2 : grams < 10 ? 1 : 0;
+  return `${grams.toLocaleString(LANG, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })} g`;
+}
+
+function toDatetimeLocal(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+// ---------- State & persistence ----------
+
+const STORAGE_KEY = "pizzacalc-settings";
+
+function loadSettings() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return { ...DEFAULTS, ...JSON.parse(stored) };
+  } catch { /* corrupt or unavailable — use defaults */ }
+  return { ...DEFAULTS };
+}
+
+const settings = loadSettings();
+let cookTime = (() => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(18, 0, 0, 0);
+  return d;
+})();
+let editedStart = null;
+
+function saveSettings() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch { /* best-effort */ }
+}
+
+// ---------- DOM wiring ----------
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+const NUMBER_FIELDS = ["pizzas", "ballWeightG", "hydrationPct", "saltPct", "roomTempC", "fridgeTempC"];
+
+for (const field of NUMBER_FIELDS) {
+  $(field).value = settings[field];
+  $(field).addEventListener("input", () => {
+    const value = Number($(field).value);
+    if (!Number.isNaN(value) && $(field).value !== "") {
+      settings[field] = value;
+      saveSettings();
+      render();
+    }
+  });
+}
+
+for (const group of ["yeastType", "proofingMode"]) {
+  for (const btn of $(group).querySelectorAll(".segment")) {
+    btn.addEventListener("click", () => {
+      settings[group] = btn.dataset.value;
+      saveSettings();
+      render();
+    });
+  }
+}
+
+$("cookTime").value = toDatetimeLocal(cookTime);
+$("cookTime").addEventListener("input", () => {
+  const date = new Date($("cookTime").value);
+  if ($("cookTime").value && !Number.isNaN(date.getTime())) {
+    cookTime = date;
+    render();
+  }
+});
+
+$("startTime").addEventListener("input", () => {
+  const date = new Date($("startTime").value);
+  if ($("startTime").value && !Number.isNaN(date.getTime())) {
+    editedStart = date;
+    render();
+  }
+});
+
+$("resetStart").addEventListener("click", () => {
+  editedStart = null;
+  render();
+});
+
+// ---------- Render ----------
+
+function render() {
+  const now = new Date();
+  const startTime = editedStart ?? now;
+
+  if (document.activeElement !== $("startTime")) {
+    $("startTime").value = toDatetimeLocal(startTime);
+  }
+  $("resetStart").hidden = editedStart === null;
+
+  for (const group of ["yeastType", "proofingMode"]) {
+    for (const btn of $(group).querySelectorAll(".segment")) {
+      btn.classList.toggle("active", btn.dataset.value === settings[group]);
+    }
+  }
+
+  const result = calculate({ ...settings, startTime, cookTime }, now);
+
+  $("messages").innerHTML =
+    result.errors.map((m) => `<p class="message error">${esc(m)}</p>`).join("") +
+    result.warnings.map((m) => `<p class="message warning">${esc(m)}</p>`).join("");
+
+  let html = "";
+  if (result.recipe) {
+    const r = result.recipe;
+    const pct = r.yeastPct.toLocaleString(LANG, { maximumSignificantDigits: 2 });
+    html += `
+      <section class="card recipe-card">
+        <h2>Recipe</h2>
+        <p class="card-subtitle">${settings.pizzas} × ${settings.ballWeightG} g balls (${formatGrams(r.totalDoughG)} dough)</p>
+        <table class="recipe-table"><tbody>
+          <tr><td>Flour (tipo 00)</td><td class="amount">${formatGrams(r.flourG)}</td></tr>
+          <tr><td>Water</td><td class="amount">${formatGrams(r.waterG)}</td></tr>
+          <tr><td>Salt</td><td class="amount">${formatGrams(r.saltG)}</td></tr>
+          <tr><td>${YEAST_NAMES[r.yeastType]}<span class="yeast-pct"> (${pct}%)</span></td>
+              <td class="amount">${formatGrams(r.yeastG)}</td></tr>
+        </tbody></table>
+      </section>`;
+  }
+  if (result.schedule) {
+    const s = result.schedule;
+    html += `
+      <section class="card timeline-card">
+        <h2>Schedule</h2>
+        <p class="card-subtitle">${s.mode === "coldProof" ? "Cold proof" : "Room temperature"} · ${formatHoursLabel(s.totalHours)} total</p>
+        <ol class="timeline">
+          ${s.steps.map((step) => `
+            <li class="timeline-step">
+              <span class="step-time">${formatStepTime(step.time, now)}</span>
+              <span class="step-body">
+                <span class="step-label">${esc(step.label)}</span>
+                <span class="step-detail">${esc(step.detail)}</span>
+              </span>
+            </li>`).join("")}
+        </ol>
+      </section>`;
+  }
+  $("results").innerHTML = html;
+}
+
+render();
+// Keep "now" fresh so an un-edited start time doesn't go stale.
+setInterval(render, 60000);
+</script>
+</body>
+</html>

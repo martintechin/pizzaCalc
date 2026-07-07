@@ -20,3 +20,7 @@ npm run build    # tsc + vite build → dist/
 ```
 
 Icons: `public/icons/icon.svg` is the master; the PNGs were generated from it with `sharp` (192, 512, and a maskable 512 with 80 % safe-zone art).
+
+## Single-file version
+
+`pizzacalc.html` is a self-contained vanilla-JS port of the whole app — same model, same constants, same UI. No build, no dependencies: open it directly in a browser, email it, or drop it on any static host. If you tune constants in `src/config.ts`, mirror the change in the constants block at the top of its `<script>`.
