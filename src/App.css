@@ -1,0 +1,249 @@
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 16px calc(40px + env(safe-area-inset-bottom));
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.app-header h1 {
+  font-size: 1.5rem;
+  color: #c8380f;
+}
+
+.tagline {
+  margin-top: 4px;
+  font-size: 0.875rem;
+  color: #8a6f60;
+}
+
+/* Cards */
+
+.form-card,
+.card {
+  background: #ffffff;
+  border: 1px solid #f0ddcc;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(51, 38, 31, 0.06);
+}
+
+.card h2 {
+  font-size: 1.05rem;
+  color: #c8380f;
+}
+
+.card-subtitle {
+  font-size: 0.8rem;
+  color: #8a6f60;
+  margin: 2px 0 12px;
+}
+
+/* Form fields */
+
+.field {
+  display: block;
+  margin-bottom: 12px;
+  flex: 1;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+
+.field-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #8a6f60;
+  margin-bottom: 4px;
+}
+
+.field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2c9b0;
+  border-radius: 8px;
+  background: #fffdfa;
+  font-size: 1rem;
+}
+
+.field input:focus {
+  outline: 2px solid #c8380f;
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.datetime-input {
+  font-variant-numeric: tabular-nums;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #c8380f;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* Advanced settings */
+
+.advanced {
+  margin-bottom: 16px;
+}
+
+.advanced summary {
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #8a6f60;
+  padding: 8px 4px;
+  user-select: none;
+}
+
+.advanced-body {
+  background: #ffffff;
+  border: 1px solid #f0ddcc;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.segmented {
+  display: flex;
+  gap: 0;
+  border: 1px solid #e2c9b0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.segment {
+  flex: 1;
+  padding: 9px 4px;
+  border: none;
+  background: #fffdfa;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border-right: 1px solid #e2c9b0;
+}
+
+.segment:last-child {
+  border-right: none;
+}
+
+.segment.active {
+  background: #c8380f;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Messages */
+
+.messages {
+  margin-bottom: 16px;
+}
+
+.message {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.message.error {
+  background: #fdeaea;
+  border: 1px solid #f0b8b8;
+  color: #9d1f1f;
+}
+
+.message.warning {
+  background: #fdf6e3;
+  border: 1px solid #ecd9a0;
+  color: #7a5c10;
+}
+
+/* Recipe */
+
+.recipe-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.recipe-table td {
+  padding: 9px 0;
+  border-bottom: 1px solid #f5e8da;
+  font-size: 0.95rem;
+}
+
+.recipe-table tr:last-child td {
+  border-bottom: none;
+}
+
+.recipe-table .amount {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.yeast-pct {
+  font-size: 0.75rem;
+  color: #8a6f60;
+  font-weight: 400;
+}
+
+/* Timeline */
+
+.timeline {
+  list-style: none;
+}
+
+.timeline-step {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5e8da;
+}
+
+.timeline-step:last-child {
+  border-bottom: none;
+}
+
+.step-time {
+  flex: 0 0 84px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #c8380f;
+  font-size: 0.9rem;
+  padding-top: 1px;
+}
+
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.step-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.step-detail {
+  font-size: 0.8rem;
+  color: #8a6f60;
+}
