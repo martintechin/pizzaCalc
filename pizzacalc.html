@@ -62,7 +62,7 @@
   .recipe-table td { padding: 9px 0; border-bottom: 1px solid #f5e8da; font-size: 0.95rem; }
   .recipe-table tr:last-child td { border-bottom: none; }
   .recipe-table .amount { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .yeast-pct { font-size: 0.75rem; color: #8a6f60; font-weight: 400; }
+  .row-note { font-size: 0.75rem; color: #8a6f60; font-weight: 400; }
   .timeline { list-style: none; }
   .timeline-step { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f5e8da; }
   .timeline-step:last-child { border-bottom: none; }
@@ -178,6 +178,10 @@ const SCHEDULE = {
 
 const WASTE_FACTOR = 1.02;
 
+// Water temp via desired dough temperature (flour assumed at room temp,
+// FRICTION_C = heat from hand kneading; a spiral mixer adds ~5-9°C).
+const WATER = { TARGET_DOUGH_TEMP_C: 23, FRICTION_C: 1, MIN_C: 5, MAX_C: 45 };
+
 const YEAST_NAMES = { fresh: "Fresh yeast", activeDry: "Active dry yeast", instant: "Instant dry yeast" };
 
 // ---------- Fermentation model ----------
@@ -261,12 +265,18 @@ function roundTo(value, step) {
   return Math.round(value / step) * step;
 }
 
+function waterTempC(roomTempC) {
+  const raw = 3 * WATER.TARGET_DOUGH_TEMP_C - 2 * roomTempC - WATER.FRICTION_C;
+  return Math.round(Math.min(WATER.MAX_C, Math.max(WATER.MIN_C, raw)));
+}
+
 function buildRecipe(p) {
   const totalDoughG = p.pizzas * p.ballWeightG * WASTE_FACTOR;
   const h = p.hydrationPct / 100, s = p.saltPct / 100, y = p.yeastPct / 100;
   const flourG = totalDoughG / (1 + h + s + y);
   return {
     flourG: roundTo(flourG, 1), waterG: roundTo(flourG * h, 1),
+    waterTempC: waterTempC(p.roomTempC),
     saltG: roundTo(flourG * s, 0.1), yeastG: roundTo(flourG * y, 0.01),
     yeastType: p.yeastType, yeastPct: p.yeastPct, totalDoughG: roundTo(totalDoughG, 1),
   };
@@ -301,6 +311,7 @@ function calculate(inputs, now) {
     pizzas: inputs.pizzas, ballWeightG: inputs.ballWeightG,
     hydrationPct: inputs.hydrationPct, saltPct: inputs.saltPct,
     yeastPct: idyPct * MODEL.YEAST_FACTOR[inputs.yeastType], yeastType: inputs.yeastType,
+    roomTempC: inputs.roomTempC,
   });
   return { recipe, schedule, errors, warnings };
 }
@@ -439,9 +450,9 @@ function render() {
         <p class="card-subtitle">${settings.pizzas} × ${settings.ballWeightG} g balls (${formatGrams(r.totalDoughG)} dough)</p>
         <table class="recipe-table"><tbody>
           <tr><td>Flour (tipo 00)</td><td class="amount">${formatGrams(r.flourG)}</td></tr>
-          <tr><td>Water</td><td class="amount">${formatGrams(r.waterG)}</td></tr>
+          <tr><td>Water<span class="row-note"> (${r.waterTempC} °C)</span></td><td class="amount">${formatGrams(r.waterG)}</td></tr>
           <tr><td>Salt</td><td class="amount">${formatGrams(r.saltG)}</td></tr>
-          <tr><td>${YEAST_NAMES[r.yeastType]}<span class="yeast-pct"> (${pct}%)</span></td>
+          <tr><td>${YEAST_NAMES[r.yeastType]}<span class="row-note"> (${pct}%)</span></td>
               <td class="amount">${formatGrams(r.yeastG)}</td></tr>
         </tbody></table>
       </section>`;

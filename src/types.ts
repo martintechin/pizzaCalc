@@ -18,6 +18,7 @@ export interface CalcInputs {
 export interface Recipe {
   flourG: number;
   waterG: number;
+  waterTempC: number;
   saltG: number;
   yeastG: number;
   yeastType: YeastType;

@@ -33,6 +33,19 @@ export const MODEL = {
   YEAST_FACTOR: { fresh: 3, activeDry: 1.25, instant: 1 },
 };
 
+/**
+ * Water temperature via the desired-dough-temperature method:
+ * water = 3 × target − flour temp − room temp − kneading friction,
+ * with flour assumed to be at room temperature.
+ */
+export const WATER = {
+  TARGET_DOUGH_TEMP_C: 23,
+  /** Heat added by hand kneading. A spiral mixer adds ~5-9°C. */
+  FRICTION_C: 1,
+  MIN_C: 5,
+  MAX_C: 45,
+};
+
 export const SCHEDULE = {
   /** Mixing/kneading time before fermentation starts. */
   MIX_MINUTES: 15,

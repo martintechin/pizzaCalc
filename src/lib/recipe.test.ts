@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRecipe } from "./recipe";
+import { buildRecipe, waterTempC } from "./recipe";
 
 const base = {
   pizzas: 4,
@@ -8,6 +8,7 @@ const base = {
   saltPct: 2.8,
   yeastPct: 0.3,
   yeastType: "fresh" as const,
+  roomTempC: 21,
 };
 
 describe("buildRecipe", () => {
@@ -41,5 +42,26 @@ describe("buildRecipe", () => {
     const single = buildRecipe({ ...base, pizzas: 1 });
     const quad = buildRecipe({ ...base, pizzas: 4 });
     expect(quad.flourG).toBeCloseTo(single.flourG * 4, -1);
+  });
+
+  it("includes the water temperature", () => {
+    expect(buildRecipe(base).waterTempC).toBe(26);
+  });
+});
+
+describe("waterTempC", () => {
+  it("targets 23°C dough: 26°C water in a 21°C room", () => {
+    // 3×23 − 2×21 − 1 friction
+    expect(waterTempC(21)).toBe(26);
+  });
+
+  it("uses cooler water in a warmer room", () => {
+    expect(waterTempC(28)).toBe(12);
+    expect(waterTempC(28)).toBeLessThan(waterTempC(18));
+  });
+
+  it("clamps to a practical range", () => {
+    expect(waterTempC(35)).toBe(5);
+    expect(waterTempC(10)).toBe(45);
   });
 });

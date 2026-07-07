@@ -1,8 +1,15 @@
-import { WASTE_FACTOR } from "../config";
+import { WASTE_FACTOR, WATER } from "../config";
 import type { Recipe, YeastType } from "../types";
 
 function roundTo(value: number, step: number): number {
   return Math.round(value / step) * step;
+}
+
+/** Water temperature that lands the mixed dough at the target temperature. */
+export function waterTempC(roomTempC: number): number {
+  const raw =
+    3 * WATER.TARGET_DOUGH_TEMP_C - 2 * roomTempC - WATER.FRICTION_C;
+  return Math.round(Math.min(WATER.MAX_C, Math.max(WATER.MIN_C, raw)));
 }
 
 export interface RecipeParams {
@@ -12,6 +19,7 @@ export interface RecipeParams {
   saltPct: number;
   yeastPct: number;
   yeastType: YeastType;
+  roomTempC: number;
 }
 
 export function buildRecipe(params: RecipeParams): Recipe {
@@ -23,6 +31,7 @@ export function buildRecipe(params: RecipeParams): Recipe {
   return {
     flourG: roundTo(flourG, 1),
     waterG: roundTo(flourG * h, 1),
+    waterTempC: waterTempC(params.roomTempC),
     saltG: roundTo(flourG * s, 0.1),
     yeastG: roundTo(flourG * y, 0.01),
     yeastType: params.yeastType,

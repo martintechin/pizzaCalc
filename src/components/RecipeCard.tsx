@@ -27,7 +27,10 @@ export function RecipeCard({ recipe, pizzas, ballWeightG }: RecipeCardProps) {
             <td className="amount">{formatGrams(recipe.flourG)}</td>
           </tr>
           <tr>
-            <td>Water</td>
+            <td>
+              Water
+              <span className="row-note"> ({recipe.waterTempC} °C)</span>
+            </td>
             <td className="amount">{formatGrams(recipe.waterG)}</td>
           </tr>
           <tr>
@@ -37,7 +40,7 @@ export function RecipeCard({ recipe, pizzas, ballWeightG }: RecipeCardProps) {
           <tr>
             <td>
               {YEAST_NAMES[recipe.yeastType]}
-              <span className="yeast-pct">
+              <span className="row-note">
                 {" "}
                 ({recipe.yeastPct.toLocaleString("sv-SE", {
                   maximumSignificantDigits: 2,

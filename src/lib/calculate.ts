@@ -58,6 +58,7 @@ export function calculate(inputs: CalcInputs, now: Date): CalcResult {
     saltPct: inputs.saltPct,
     yeastPct: convertYeastPct(idyPct, inputs.yeastType),
     yeastType: inputs.yeastType,
+    roomTempC: inputs.roomTempC,
   });
 
   return { recipe, schedule, errors, warnings };
