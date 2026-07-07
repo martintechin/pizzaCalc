@@ -11,8 +11,13 @@ export function calculate(inputs: CalcInputs, now: Date): CalcResult {
   if (inputs.cookTime.getTime() <= now.getTime()) {
     errors.push("The cook time is in the past — pick a future time.");
   }
+  const mixMs = SCHEDULE.MIX_MINUTES * 60_000;
   if (inputs.cookTime.getTime() <= inputs.startTime.getTime()) {
     errors.push("The cook time must be after the start time.");
+  } else if (inputs.cookTime.getTime() <= inputs.startTime.getTime() + mixMs) {
+    errors.push(
+      "Mixing alone takes 10–15 minutes — there's no time left to proof. Pick a later cook time."
+    );
   }
   if (inputs.pizzas < 1) {
     errors.push("You need at least one pizza.");

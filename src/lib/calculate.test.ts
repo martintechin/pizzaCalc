@@ -36,6 +36,12 @@ describe("calculate — errors", () => {
     const result = calculate(inputs(8, { pizzas: 0 }), now);
     expect(result.recipe).toBeNull();
   });
+
+  it("rejects a cook time that leaves no room after mixing", () => {
+    const result = calculate(inputs(10 / 60), now);
+    expect(result.recipe).toBeNull();
+    expect(result.errors.some((e) => e.includes("Mixing alone"))).toBe(true);
+  });
 });
 
 describe("calculate — warnings", () => {

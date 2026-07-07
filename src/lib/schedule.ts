@@ -21,24 +21,31 @@ function addHours(date: Date, hours: number): Date {
   return new Date(date.getTime() + hours * MS_PER_HOUR);
 }
 
-function buildRoomOnly(params: ScheduleParams, totalHours: number): Schedule {
+const MIX_DETAIL =
+  "Dissolve yeast in the water, add flour, then salt. Knead until smooth — allow 10–15 minutes.";
+
+function buildRoomOnly(
+  params: ScheduleParams,
+  fermentStart: Date,
+  totalHours: number
+): Schedule {
   const { startTime, cookTime, roomTempC } = params;
   const ballHours = Math.max(
     totalHours - SCHEDULE.ROOM_BALL_BEFORE_COOK_HOURS,
     totalHours / 2
   );
-  const ballTime = addHours(startTime, ballHours);
+  const ballTime = addHours(fermentStart, ballHours);
   const segments: Segment[] = [{ hours: totalHours, tempC: roomTempC }];
   const steps: ScheduleStep[] = [
     {
       label: "Mix the dough",
-      detail: "Dissolve yeast in the water, add flour, then salt. Knead until smooth.",
+      detail: MIX_DETAIL,
       time: startTime,
     },
     {
       label: "Bulk proof",
       detail: `Cover and leave at room temperature (${params.roomTempC}°C).`,
-      time: startTime,
+      time: fermentStart,
     },
     {
       label: "Ball the dough",
@@ -54,11 +61,15 @@ function buildRoomOnly(params: ScheduleParams, totalHours: number): Schedule {
   return { mode: "roomOnly", segments, steps, totalHours };
 }
 
-function buildColdProof(params: ScheduleParams, totalHours: number): Schedule {
+function buildColdProof(
+  params: ScheduleParams,
+  fermentStart: Date,
+  totalHours: number
+): Schedule {
   const { startTime, cookTime, roomTempC, fridgeTempC } = params;
   const coldHours =
     totalHours - SCHEDULE.COLD_BULK_HOURS - SCHEDULE.COLD_FINAL_PROOF_HOURS;
-  const ballTime = addHours(startTime, SCHEDULE.COLD_BULK_HOURS);
+  const ballTime = addHours(fermentStart, SCHEDULE.COLD_BULK_HOURS);
   const outTime = addHours(cookTime, -SCHEDULE.COLD_FINAL_PROOF_HOURS);
   const segments: Segment[] = [
     { hours: SCHEDULE.COLD_BULK_HOURS, tempC: roomTempC },
@@ -68,13 +79,13 @@ function buildColdProof(params: ScheduleParams, totalHours: number): Schedule {
   const steps: ScheduleStep[] = [
     {
       label: "Mix the dough",
-      detail: "Dissolve yeast in the water, add flour, then salt. Knead until smooth.",
+      detail: MIX_DETAIL,
       time: startTime,
     },
     {
       label: "Bulk proof",
       detail: `Cover and leave at room temperature (${roomTempC}°C).`,
-      time: startTime,
+      time: fermentStart,
     },
     {
       label: "Ball & into the fridge",
@@ -96,8 +107,10 @@ function buildColdProof(params: ScheduleParams, totalHours: number): Schedule {
 }
 
 export function planSchedule(params: ScheduleParams): ScheduleResult {
+  // Fermentation only starts once mixing is done.
+  const fermentStart = addHours(params.startTime, SCHEDULE.MIX_MINUTES / 60);
   const totalHours =
-    (params.cookTime.getTime() - params.startTime.getTime()) / MS_PER_HOUR;
+    (params.cookTime.getTime() - fermentStart.getTime()) / MS_PER_HOUR;
 
   const minColdTotal =
     SCHEDULE.COLD_BULK_HOURS + SCHEDULE.COLD_FINAL_PROOF_HOURS + 1;
@@ -116,12 +129,15 @@ export function planSchedule(params: ScheduleParams): ScheduleResult {
   }
 
   if (wantCold && totalHours < minColdTotal) {
-    return { schedule: buildRoomOnly(params, totalHours), coldFallback: true };
+    return {
+      schedule: buildRoomOnly(params, fermentStart, totalHours),
+      coldFallback: true,
+    };
   }
   return {
     schedule: wantCold
-      ? buildColdProof(params, totalHours)
-      : buildRoomOnly(params, totalHours),
+      ? buildColdProof(params, fermentStart, totalHours)
+      : buildRoomOnly(params, fermentStart, totalHours),
     coldFallback: false,
   };
 }

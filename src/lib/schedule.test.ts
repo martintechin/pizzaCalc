@@ -52,20 +52,23 @@ describe("planSchedule — overrides", () => {
 });
 
 describe("planSchedule — segments", () => {
-  it("room-only has one segment covering the full duration at room temp", () => {
+  // Fermentation starts 15 min after the start time (mixing allowance).
+  const MIX_H = 0.25;
+
+  it("room-only has one segment covering the post-mix duration at room temp", () => {
     const { schedule } = planSchedule(params(8));
-    expect(schedule.segments).toEqual([{ hours: 8, tempC: 21 }]);
+    expect(schedule.segments).toEqual([{ hours: 8 - MIX_H, tempC: 21 }]);
   });
 
-  it("cold proof is 2h RT + fridge + 3h RT and sums to the total", () => {
+  it("cold proof is 2h RT + fridge + 3h RT and sums to the post-mix total", () => {
     const { schedule } = planSchedule(params(26));
     expect(schedule.segments).toEqual([
       { hours: 2, tempC: 21 },
-      { hours: 21, tempC: 4 },
+      { hours: 21 - MIX_H, tempC: 4 },
       { hours: 3, tempC: 21 },
     ]);
     const sum = schedule.segments.reduce((acc, s) => acc + s.hours, 0);
-    expect(sum).toBeCloseTo(26, 5);
+    expect(sum).toBeCloseTo(26 - MIX_H, 5);
   });
 });
 
@@ -90,6 +93,13 @@ describe("planSchedule — steps", () => {
     expect(labels).toContain("Out of the fridge");
   });
 
+  it("bulk proof starts 15 minutes after mixing", () => {
+    const p = params(8);
+    const { steps } = planSchedule(p).schedule;
+    const bulk = steps.find((s) => s.label === "Bulk proof")!;
+    expect(bulk.time.getTime()).toBe(p.startTime.getTime() + 15 * 60_000);
+  });
+
   it("room-only balls the dough 2h before cooking", () => {
     const p = params(8);
     const { steps } = planSchedule(p).schedule;
@@ -97,10 +107,12 @@ describe("planSchedule — steps", () => {
     expect(ball.time.getTime()).toBe(p.cookTime.getTime() - 2 * MS_PER_HOUR);
   });
 
-  it("very short room-only balls at the halfway point", () => {
+  it("very short room-only balls at the midpoint of the fermentation window", () => {
     const p = params(2);
     const { steps } = planSchedule(p).schedule;
     const ball = steps.find((s) => s.label === "Ball the dough")!;
-    expect(ball.time.getTime()).toBe(p.startTime.getTime() + 1 * MS_PER_HOUR);
+    // 15 min mixing, then halfway through the remaining 1.75h
+    const fermentStart = p.startTime.getTime() + 15 * 60_000;
+    expect(ball.time.getTime()).toBe(fermentStart + 0.875 * MS_PER_HOUR);
   });
 });

@@ -171,6 +171,7 @@ const MODEL = {
 };
 
 const SCHEDULE = {
+  MIX_MINUTES: 15,
   COLD_PROOF_THRESHOLD_HOURS: 12, COLD_BULK_HOURS: 2, COLD_FINAL_PROOF_HOURS: 3,
   ROOM_BALL_BEFORE_COOK_HOURS: 2, MIN_SENSIBLE_HOURS: 4, MAX_SENSIBLE_HOURS: 120,
 };
@@ -203,23 +204,23 @@ function addHours(date, hours) {
   return new Date(date.getTime() + hours * MS_PER_HOUR);
 }
 
-const MIX_DETAIL = "Dissolve yeast in the water, add flour, then salt. Knead until smooth.";
+const MIX_DETAIL = "Dissolve yeast in the water, add flour, then salt. Knead until smooth — allow 10–15 minutes.";
 
-function buildRoomOnly(p, totalHours) {
+function buildRoomOnly(p, fermentStart, totalHours) {
   const ballHours = Math.max(totalHours - SCHEDULE.ROOM_BALL_BEFORE_COOK_HOURS, totalHours / 2);
   return {
     mode: "roomOnly", totalHours,
     segments: [{ hours: totalHours, tempC: p.roomTempC }],
     steps: [
       { label: "Mix the dough", detail: MIX_DETAIL, time: p.startTime },
-      { label: "Bulk proof", detail: `Cover and leave at room temperature (${p.roomTempC}°C).`, time: p.startTime },
-      { label: "Ball the dough", detail: "Divide into balls and proof covered until cooking.", time: addHours(p.startTime, ballHours) },
+      { label: "Bulk proof", detail: `Cover and leave at room temperature (${p.roomTempC}°C).`, time: fermentStart },
+      { label: "Ball the dough", detail: "Divide into balls and proof covered until cooking.", time: addHours(fermentStart, ballHours) },
       { label: "Fire it up", detail: "Stretch, top and bake.", time: p.cookTime },
     ],
   };
 }
 
-function buildColdProof(p, totalHours) {
+function buildColdProof(p, fermentStart, totalHours) {
   const coldHours = totalHours - SCHEDULE.COLD_BULK_HOURS - SCHEDULE.COLD_FINAL_PROOF_HOURS;
   return {
     mode: "coldProof", totalHours,
@@ -230,8 +231,8 @@ function buildColdProof(p, totalHours) {
     ],
     steps: [
       { label: "Mix the dough", detail: MIX_DETAIL, time: p.startTime },
-      { label: "Bulk proof", detail: `Cover and leave at room temperature (${p.roomTempC}°C).`, time: p.startTime },
-      { label: "Ball & into the fridge", detail: `Divide into balls, cover, and refrigerate (${p.fridgeTempC}°C).`, time: addHours(p.startTime, SCHEDULE.COLD_BULK_HOURS) },
+      { label: "Bulk proof", detail: `Cover and leave at room temperature (${p.roomTempC}°C).`, time: fermentStart },
+      { label: "Ball & into the fridge", detail: `Divide into balls, cover, and refrigerate (${p.fridgeTempC}°C).`, time: addHours(fermentStart, SCHEDULE.COLD_BULK_HOURS) },
       { label: "Out of the fridge", detail: "Let the balls come back to room temperature, covered.", time: addHours(p.cookTime, -SCHEDULE.COLD_FINAL_PROOF_HOURS) },
       { label: "Fire it up", detail: "Stretch, top and bake.", time: p.cookTime },
     ],
@@ -239,15 +240,17 @@ function buildColdProof(p, totalHours) {
 }
 
 function planSchedule(p) {
-  const totalHours = (p.cookTime.getTime() - p.startTime.getTime()) / MS_PER_HOUR;
+  // Fermentation only starts once mixing is done.
+  const fermentStart = addHours(p.startTime, SCHEDULE.MIX_MINUTES / 60);
+  const totalHours = (p.cookTime.getTime() - fermentStart.getTime()) / MS_PER_HOUR;
   const minColdTotal = SCHEDULE.COLD_BULK_HOURS + SCHEDULE.COLD_FINAL_PROOF_HOURS + 1;
   const wantCold = p.proofingMode === "coldProof" ||
     (p.proofingMode === "auto" && totalHours > SCHEDULE.COLD_PROOF_THRESHOLD_HOURS);
   if (wantCold && totalHours < minColdTotal) {
-    return { schedule: buildRoomOnly(p, totalHours), coldFallback: true };
+    return { schedule: buildRoomOnly(p, fermentStart, totalHours), coldFallback: true };
   }
   return {
-    schedule: wantCold ? buildColdProof(p, totalHours) : buildRoomOnly(p, totalHours),
+    schedule: wantCold ? buildColdProof(p, fermentStart, totalHours) : buildRoomOnly(p, fermentStart, totalHours),
     coldFallback: false,
   };
 }
@@ -277,6 +280,8 @@ function calculate(inputs, now) {
     errors.push("The cook time is in the past — pick a future time.");
   if (inputs.cookTime.getTime() <= inputs.startTime.getTime())
     errors.push("The cook time must be after the start time.");
+  else if (inputs.cookTime.getTime() <= inputs.startTime.getTime() + SCHEDULE.MIX_MINUTES * 60000)
+    errors.push("Mixing alone takes 10–15 minutes — there's no time left to proof. Pick a later cook time.");
   if (inputs.pizzas < 1) errors.push("You need at least one pizza.");
   if (errors.length) return { recipe: null, schedule: null, errors, warnings };
 

@@ -34,6 +34,8 @@ export const MODEL = {
 };
 
 export const SCHEDULE = {
+  /** Mixing/kneading time before fermentation starts. */
+  MIX_MINUTES: 15,
   /** Auto mode plans a fridge phase above this many hours. */
   COLD_PROOF_THRESHOLD_HOURS: 12,
   /** Room-temperature bulk before the fridge. */
