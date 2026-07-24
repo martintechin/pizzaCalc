@@ -8,7 +8,7 @@ Neapolitan pizza dough calculator that plans backwards from **when you want to c
 - **Schedule**: if there's more than 12 h until cooking, the app plans room-temp bulk → fridge → out 3 h before baking; otherwise a single room-temperature proof. Override to force either mode under Advanced settings.
 - **Yeast**: modeled as an accumulating rate process — fermentation rate doubles per +7 °C, and the required instant-dry-yeast percentage is `1.8 / effective-hours-at-21°C`, converted for fresh (3×) or active dry (1.25×) yeast. Constants live in `src/config.ts` — tune them after real bakes.
 
-Pure client-side PWA — installable, works offline, no backend. Settings persist in localStorage; dates reset on each visit.
+Pure client-side PWA — installable, works offline, no backend. All settings persist in localStorage, including the cook time: if the remembered cook time has passed, it rolls forward to the next day at the same clock time. The start (mixing) time always resets to "now".
 
 ## Development
 

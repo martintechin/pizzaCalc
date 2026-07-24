@@ -344,6 +344,7 @@ function toDatetimeLocal(date) {
 // ---------- State & persistence ----------
 
 const STORAGE_KEY = "pizzacalc-settings";
+const COOK_TIME_KEY = "pizzacalc-cooktime";
 
 function loadSettings() {
   try {
@@ -353,17 +354,44 @@ function loadSettings() {
   return { ...DEFAULTS };
 }
 
-const settings = loadSettings();
-let cookTime = (() => {
-  const d = new Date();
+function defaultCookTime(now) {
+  const d = new Date(now);
   d.setDate(d.getDate() + 1);
   d.setHours(18, 0, 0, 0);
   return d;
-})();
+}
+
+// A remembered cook time still in the future is used as-is; one that has
+// passed rolls forward to the next day at the same clock time.
+function restoreCookTime(storedIso, now) {
+  if (!storedIso) return defaultCookTime(now);
+  const stored = new Date(storedIso);
+  if (Number.isNaN(stored.getTime())) return defaultCookTime(now);
+  if (stored.getTime() > now.getTime()) return stored;
+  const candidate = new Date(now);
+  candidate.setHours(stored.getHours(), stored.getMinutes(), stored.getSeconds(), 0);
+  while (candidate.getTime() <= now.getTime()) {
+    candidate.setTime(candidate.getTime() + 86400000);
+  }
+  return candidate;
+}
+
+function loadCookTime() {
+  let stored = null;
+  try { stored = localStorage.getItem(COOK_TIME_KEY); } catch { /* use default */ }
+  return restoreCookTime(stored, new Date());
+}
+
+const settings = loadSettings();
+let cookTime = loadCookTime();
 let editedStart = null;
 
 function saveSettings() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch { /* best-effort */ }
+}
+
+function saveCookTime() {
+  try { localStorage.setItem(COOK_TIME_KEY, cookTime.toISOString()); } catch { /* best-effort */ }
 }
 
 // ---------- DOM wiring ----------
@@ -400,6 +428,7 @@ $("cookTime").addEventListener("input", () => {
   const date = new Date($("cookTime").value);
   if ($("cookTime").value && !Number.isNaN(date.getTime())) {
     cookTime = date;
+    saveCookTime();
     render();
   }
 });

@@ -7,13 +7,19 @@ import { WarningList } from "./components/WarningList";
 import { DEFAULTS } from "./config";
 import { usePersistedState } from "./hooks/usePersistedState";
 import { calculate } from "./lib/calculate";
+import { restoreCookTime } from "./lib/cookTime";
 import type { ProofingMode, YeastType } from "./types";
 
-function defaultCookTime(now: Date): Date {
-  const cook = new Date(now);
-  cook.setDate(cook.getDate() + 1);
-  cook.setHours(18, 0, 0, 0);
-  return cook;
+const COOK_TIME_KEY = "pizzacalc-cooktime";
+
+function loadCookTime(): Date {
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(COOK_TIME_KEY);
+  } catch {
+    // Storage unavailable — use the default.
+  }
+  return restoreCookTime(stored, new Date());
 }
 
 interface Settings {
@@ -33,8 +39,16 @@ export default function App() {
     DEFAULTS
   );
   const [now, setNow] = useState(() => new Date());
-  const [cookTime, setCookTime] = useState(() => defaultCookTime(new Date()));
+  const [cookTime, setCookTime] = useState(loadCookTime);
   const [editedStart, setEditedStart] = useState<Date | null>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COOK_TIME_KEY, cookTime.toISOString());
+    } catch {
+      // Storage full or unavailable — persistence is best-effort.
+    }
+  }, [cookTime]);
 
   // Keep "now" fresh so a start time of "now" doesn't go stale on a
   // long-lived tab (PWA kept open on a phone).
