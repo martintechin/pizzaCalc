@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  base: "/pizzaCalc/",
   plugins: [
     react(),
     VitePWA({
@@ -20,20 +21,20 @@ export default defineConfig({
         theme_color: "#c8380f",
         background_color: "#fff8f0",
         display: "standalone",
-        start_url: "/",
+        start_url: "/pizzaCalc/",
         icons: [
           {
-            src: "/icons/icon-192.png",
+            src: "icons/icon-192.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "/icons/icon-512.png",
+            src: "icons/icon-512.png",
             sizes: "512x512",
             type: "image/png",
           },
           {
-            src: "/icons/icon-maskable-512.png",
+            src: "icons/icon-maskable-512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
